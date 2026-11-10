@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lịch bài điện mặt trời</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: một cột hẹp như dòng thời gian, mỗi bài là một thẻ có ngày đăng gợi ý, nội dung sửa được và nút sao chép. */
+:root {
+  --bg: #eef2f6;
+  --surface: #ffffff;
+  --fg: #16222e;
+  --muted: #5b6b7a;
+  --line: #d6dee6;
+  --accent: #1d4f91;
+  --accent-soft: #e3edf9;
+  --sun: #e8a317;
+  --ok: #1f7a4d;
+  --ok-soft: #dff2e7;
+  --warn: #8a5a00;
+  --warn-soft: #fdf0d2;
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a24; --surface: #16232f; --fg: #e6edf3; --muted: #93a4b4; --line: #263645;
+    --accent: #7db2ee; --accent-soft: #1b3350; --sun: #f0b53a; --ok: #4cc38a; --ok-soft: #173a2b;
+    --warn: #f0c36a; --warn-soft: #3b2f12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a24; --surface: #16232f; --fg: #e6edf3; --muted: #93a4b4; --line: #263645;
+  --accent: #7db2ee; --accent-soft: #1b3350; --sun: #f0b53a; --ok: #4cc38a; --ok-soft: #173a2b;
+  --warn: #f0c36a; --warn-soft: #3b2f12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.55;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; font-weight: 700; text-wrap: balance; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 60ch; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+.progress-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.progress-top strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.track { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.fill { height: 100%; width: 0; background: var(--sun); border-radius: 99px; transition: width .3s; }
+label { font-weight: 600; font-size: .85rem; }
+.hint { color: var(--muted); font-size: .82rem; margin: 0; }
+textarea, input[type="text"], select {
+  width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 12px;
+}
+textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip {
+  font: inherit; font-size: .85rem; font-weight: 500; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 99px; padding: 6px 14px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filters select { width: auto; margin-left: auto; padding: 6px 10px; font-size: .85rem; background: var(--surface); }
+.list { display: grid; gap: 14px; }
+.post { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.post.done { border-color: var(--ok); }
+.post-head { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; }
+.when { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tag { font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 2px 8px; }
+.need { font-size: .75rem; font-weight: 600; color: var(--warn); background: var(--warn-soft); border-radius: 4px; padding: 2px 8px; }
+.okmark { font-size: .75rem; font-weight: 600; color: var(--ok); background: var(--ok-soft); border-radius: 4px; padding: 2px 8px; }
+.img { margin: 0; font-size: .85rem; color: var(--muted); }
+.img b { color: var(--fg); font-weight: 600; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  font: inherit; font-weight: 600; font-size: .9rem; border-radius: 8px; padding: 9px 16px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: #fff;
+}
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.ghost[aria-pressed="true"] { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.empty { text-align: center; color: var(--muted); padding: 28px 0; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: .9rem;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.toast.show { opacity: 1; }
+.foot { color: var(--muted); font-size: .85rem; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .fill, .toast { transition: none; } }
+html{color-scheme:light}body{margin:0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Lịch bài điện mặt trời</h1>
+    <p class="sub">12 bài viết sẵn cho trang cá nhân, đăng cách nhau 2 ngày từ 11/11. Chọn bài, bấm Sao chép, dán lên Facebook, rồi bấm Đã đăng.</p>
+  </header>
+
+  <section class="panel" aria-label="Tiến độ và thông tin liên hệ">
+    <div class="progress-top"><span>Đã đăng</span><strong id="count">0 / 12 bài</strong></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <label for="contact">Dòng liên hệ cuối bài</label>
+    <input type="text" id="contact" placeholder="Ví dụ: Anh Minh, tư vấn điện mặt trời, Zalo 09xx xxx xxx">
+    <p class="hint">Dòng này tự thêm vào cuối mỗi bài khi sao chép. Để trống nếu không muốn.</p>
+  </section>
+
+  <div class="filters" role="group" aria-label="Lọc bài">
+    <button class="chip" data-status="all" aria-pressed="true">Tất cả</button>
+    <button class="chip" data-status="todo" aria-pressed="false">Chưa đăng</button>
+    <button class="chip" data-status="done" aria-pressed="false">Đã đăng</button>
+    <select id="topic" aria-label="Lọc theo chủ đề"><option value="">Mọi chủ đề</option></select>
+  </div>
+
+  <main class="list" id="list"></main>
+  <p class="foot">Muốn thêm bài, đổi chủ đề hoặc giọng văn, anh nhắn em trong chat.</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+var START = new Date(2026, 10, 11);
+var DAYS = ["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
+var POSTS = [
+{id:"p1", topic:"Kiến thức", img:"Ảnh mái nhà có tấm pin dưới nắng, hoặc ảnh hóa đơn tiền điện đã che thông tin cá nhân.", text:
+"☀️ Điện mặt trời có thật sự giảm tiền điện?\n\nCó, nhưng mức giảm phụ thuộc vào 3 thứ:\n• Giờ nhà mình dùng điện nhiều nhất. Dùng ban ngày nhiều thì tiết kiệm rõ hơn.\n• Công suất lắp so với nhu cầu thực tế.\n• Hướng mái và mức che nắng.\n\nMột hệ thống thiết kế đúng nhu cầu hiệu quả hơn nhiều so với lắp thật lớn rồi dùng không hết.\n\nAnh làm trong nghề điện mặt trời. Ai muốn biết nhà mình hợp mức nào cứ nhắn anh, anh xem giúp."},
+{id:"p2", topic:"Mẹo", img:"Ảnh mái nhà nhìn từ trên cao hoặc ảnh sân thượng thoáng nắng.", text:
+"Nhà bạn có hợp lắp điện mặt trời không? Tự kiểm tra nhanh 3 điều:\n\n1️⃣ Tiền điện mỗi tháng thường từ khoảng 1,5 triệu đồng trở lên.\n2️⃣ Mái có chỗ trống, ít bị cây hoặc nhà cao che nắng trong khoảng 9h đến 15h.\n3️⃣ Có người dùng điện ban ngày: máy lạnh, tủ lạnh, bơm nước, hoặc kinh doanh tại nhà.\n\nĐạt 2 trong 3 điều là đáng để tính thử. Chưa chắc thì nhắn anh, anh giúp xem."},
+{id:"p3", topic:"Hỏi đáp", img:"Ảnh biến tần đã lắp trên tường, hoặc ảnh đèn nhà sáng giữa lúc khu phố mất điện nếu có.", text:
+"❓ Mất điện lưới thì điện mặt trời có còn chạy không?\n\nVới hệ thống hòa lưới thông thường thì không. Biến tần tự ngắt khi mất điện lưới để bảo đảm an toàn cho thợ điện đang sửa đường dây.\n\nMuốn có điện khi mất lưới, cần hệ thống hybrid có pin lưu trữ. Chi phí cao hơn, nên chỉ đáng làm nếu nhà mình hay mất điện hoặc có thiết bị không được tắt.\n\nBạn đang phân vân loại nào, comment hoặc nhắn anh nhé."},
+{id:"p4", topic:"Báo giá", img:"Ảnh khảo sát mái, hoặc ảnh anh đang đo đạc tại công trình.", text:
+"💬 \"Anh ơi lắp điện mặt trời hết bao nhiêu tiền?\"\n\nĐây là câu anh nghe nhiều nhất. Giá phụ thuộc công suất, loại tấm pin, loại biến tần và kiểu mái, nên không có một con số chung cho mọi nhà.\n\nĐể báo sơ bộ, anh chỉ cần 3 thông tin:\n• Tiền điện trung bình mỗi tháng\n• Loại mái: tôn, ngói hay bê tông\n• Nhà có dùng điện ban ngày nhiều không\n\nNhắn anh 3 thông tin này, anh gửi báo giá sơ bộ."},
+{id:"p5", topic:"Công trình", img:"2 đến 3 ảnh thật của công trình: toàn cảnh mái, tủ điện, biến tần. Xin phép chủ nhà trước khi đăng.", text:
+"✅ Vừa hoàn thành hệ thống điện mặt trời [công suất] kWp cho gia đình [tên hoặc khu vực] ở [quận/huyện].\n\nThông tin hệ thống:\n• Tấm pin: [hãng, số tấm]\n• Biến tần: [hãng, loại]\n• Thời gian thi công: [số ngày]\n\nChủ nhà cho biết [một câu nhận xét thật của khách].\n\nCông trình nào anh cũng khảo sát kỹ trước khi báo giá. Nhà bạn muốn xem thử, nhắn anh nhé."},
+{id:"p6", topic:"Mẹo", img:"Ảnh tấm pin sạch dưới nắng, hoặc ảnh so sánh pin bám bụi với pin sạch.", text:
+"🧼 Tấm pin bám bụi có làm giảm điện không?\n\nCó. Bụi dày, phân chim hay lá cây che một phần tấm pin đều làm sản lượng giảm.\n\nMẹo giữ pin sạch:\n• Kiểm tra bằng mắt vài tháng một lần.\n• Rửa bằng nước sạch và dụng cụ mềm, không dùng vật cứng cọ lên mặt kính.\n• Làm lúc sáng sớm hoặc chiều mát, tránh lúc tấm pin đang nóng.\n\nLưu ý an toàn: mái ướt rất trơn, đừng tự leo nếu chưa quen. Cần thì nhờ thợ."},
+{id:"p7", topic:"Kiến thức", img:"Sơ đồ đơn giản 3 cột: hòa lưới, độc lập, hybrid. Em có thể vẽ nếu anh cần.", text:
+"🔌 Hòa lưới, độc lập, hybrid: khác nhau thế nào?\n\n• Hòa lưới: nối với điện lưới, không có pin. Rẻ nhất, hợp nhà dùng điện ban ngày.\n• Độc lập: không nối lưới, dùng pin. Hợp nơi chưa có điện lưới.\n• Hybrid: nối lưới và có pin. Có điện khi mất lưới, chi phí cao hơn.\n\nĐa số nhà phố chọn hòa lưới vì gọn và dễ tính hiệu quả. Chọn sai loại sẽ tốn tiền, nên hỏi kỹ trước khi lắp."},
+{id:"p8", topic:"Câu chuyện", img:"Ảnh chân dung anh ở công trình, hoặc ảnh đội thi công.", text:
+"Nhiều bạn hỏi sao anh làm nghề điện mặt trời.\n\n[Kể 2 đến 3 câu thật: bắt đầu vào nghề năm nào, lý do chọn nghề, một lần anh thấy khách tiết kiệm được tiền điện.]\n\nBây giờ mỗi lần xong một công trình, anh vẫn hỏi chủ nhà một câu: \"Tiền điện tháng này thế nào?\" Câu trả lời tốt nhất vẫn là nụ cười của họ."},
+{id:"p9", topic:"Hỏi đáp", img:"Ảnh các loại mái đã lắp pin: mái tôn, mái ngói, sân thượng bê tông.", text:
+"🏠 Mái tôn, mái ngói, sân thượng bê tông: mái nào lắp được?\n\nMái nào cũng lắp được, chỉ khác cách làm khung giá đỡ:\n• Mái tôn: bắt kẹp hoặc vít vào xà gồ, thi công nhanh.\n• Mái ngói: dùng móc riêng luồn dưới ngói.\n• Sân thượng bê tông: dựng khung nghiêng, cần tính tải gió.\n\nMái cũ thì cần kiểm tra độ chắc và chống thấm tại điểm bắt vít trước khi lắp. Muốn anh xem mái nhà bạn, gửi ảnh mái qua tin nhắn."},
+{id:"p10", topic:"Kiến thức", img:"Ảnh phiếu bảo hành hoặc nhãn thông số của tấm pin (che mã số seri).", text:
+"⏳ Điện mặt trời dùng được bao lâu?\n\nTấm pin thường có bảo hành hiệu suất kéo dài hàng chục năm, còn biến tần có thời hạn bảo hành ngắn hơn. Mỗi hãng một khác, nên đọc kỹ phiếu bảo hành trước khi ký.\n\n3 điều nên hỏi về bảo hành:\n• Bảo hành sản phẩm và bảo hành hiệu suất là hai loại khác nhau.\n• Ai là người đến nhà xử lý khi có sự cố?\n• Nếu hãng ngừng hoạt động thì sao?\n\nCó thắc mắc về bảo hành, cứ hỏi anh."},
+{id:"p11", topic:"Mẹo", img:"Ảnh bản hợp đồng hoặc bản vẽ đã che thông tin khách, hoặc ảnh anh trao đổi với khách.", text:
+"📝 4 câu nên hỏi nhà thầu trước khi ký hợp đồng điện mặt trời:\n\n1. Công suất và sản lượng dự kiến tính dựa trên cái gì?\n2. Tên hãng, model tấm pin và biến tần ghi rõ trong hợp đồng chưa?\n3. Bảo hành ai chịu, giữ liên lạc bằng cách nào?\n4. Báo giá đã gồm vật tư, nhân công, thủ tục đấu nối chưa?\n\nNhà thầu nào trả lời rõ ràng cả 4 câu thì đáng tin hơn hẳn. Anh sẵn sàng trả lời cả 4 câu này cho bạn."},
+{id:"p12", topic:"Báo giá", img:"Ảnh tổng hợp các công trình trong tháng, hoặc ảnh anh chụp cùng khách.", text:
+"📅 Tháng này anh nhận thêm một số khách mới tư vấn điện mặt trời.\n\nNếu bạn đang cân nhắc, đây là cách nhanh nhất:\n1. Chụp hóa đơn tiền điện 2 đến 3 tháng gần nhất.\n2. Chụp mái nhà hoặc sân thượng.\n3. Nhắn anh, anh trả lời sơ bộ trong ngày.\n\nKhông cần quyết định ngay. Tính thử cho rõ cũng không mất gì."}
+];
+
+var KEY = "lich-bai-nlmt-v1";
+var state = { done: {}, edits: {}, contact: "" };
+try { var s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) state = { done: s.done || {}, edits: s.edits || {}, contact: s.contact || "" }; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var filter = { status: "all", topic: "" };
+var listEl = document.getElementById("list");
+var toastEl = document.getElementById("toast");
+var toastTimer;
+function toast(msg) { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 1800); }
+
+function whenLabel(i) {
+  var d = new Date(START.getFullYear(), START.getMonth(), START.getDate() + i * 2);
+  var t = i % 2 === 0 ? "19:30" : "11:45";
+  return DAYS[d.getDay()] + ", " + d.getDate() + "/" + (d.getMonth() + 1) + " lúc " + t;
+}
+function curText(p) { return state.edits[p.id] != null ? state.edits[p.id] : p.text; }
+function fit(ta) { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 2) + "px"; }
+function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+
+function copyText(ta, p) {
+  var out = ta.value.trim();
+  if (state.contact.trim()) out += "\n\n" + state.contact.trim();
+  function fallback() {
+    var tmp = document.createElement("textarea"); tmp.value = out; document.body.appendChild(tmp); tmp.select();
+    var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(tmp);
+    toast(ok ? "Đã sao chép, dán lên Facebook nhé" : "Không sao chép được, anh bôi đen và copy tay nhé");
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(out).then(function () { toast("Đã sao chép, dán lên Facebook nhé"); }, fallback);
+  } else { fallback(); }
+}
+
+function render() {
+  listEl.textContent = "";
+  var shown = 0, doneCount = 0;
+  POSTS.forEach(function (p, i) {
+    var done = !!state.done[p.id];
+    if (done) doneCount++;
+    if (filter.status === "todo" && done) return;
+    if (filter.status === "done" && !done) return;
+    if (filter.topic && p.topic !== filter.topic) return;
+    shown++;
+    var card = el("article", "post" + (done ? " done" : ""));
+    var head = el("div", "post-head");
+    head.appendChild(el("span", "when", whenLabel(i)));
+    head.appendChild(el("span", "tag", p.topic));
+    var ta = el("textarea"); ta.id = "t-" + p.id; ta.value = curText(p); ta.setAttribute("aria-label", "Nội dung bài " + (i + 1));
+    var need = el("span", "need", "Cần điền thông tin thật"); need.hidden = ta.value.indexOf("[") === -1;
+    head.appendChild(need);
+    if (done) head.appendChild(el("span", "okmark", "Đã đăng"));
+    card.appendChild(head);
+    card.appendChild(ta);
+    ta.addEventListener("input", function () { state.edits[p.id] = ta.value; need.hidden = ta.value.indexOf("[") === -1; fit(ta); save(); });
+    var img = el("p", "img"); var b = el("b", null, "Gợi ý ảnh: "); img.appendChild(b); img.appendChild(document.createTextNode(p.img));
+    card.appendChild(img);
+    var act = el("div", "actions");
+    var copy = el("button", "btn", "Sao chép bài"); copy.type = "button";
+    copy.addEventListener("click", function () { copyText(ta, p); });
+    var mark = el("button", "btn ghost", done ? "Đã đăng" : "Đánh dấu đã đăng"); mark.type = "button"; mark.setAttribute("aria-pressed", done ? "true" : "false");
+    mark.addEventListener("click", function () { if (state.done[p.id]) delete state.done[p.id]; else state.done[p.id] = true; save(); render(); });
+    act.appendChild(copy); act.appendChild(mark);
+    card.appendChild(act);
+    listEl.appendChild(card);
+  });
+  if (!shown) listEl.appendChild(el("p", "empty", "Không có bài nào khớp bộ lọc."));
+  document.getElementById("count").textContent = doneCount + " / " + POSTS.length + " bài";
+  document.getElementById("fill").style.width = (doneCount / POSTS.length * 100) + "%";
+  Array.prototype.forEach.call(listEl.querySelectorAll("textarea"), fit);
+}
+
+var contact = document.getElementById("contact");
+contact.value = state.contact;
+contact.addEventListener("input", function () { state.contact = contact.value; save(); });
+
+var sel = document.getElementById("topic");
+POSTS.map(function (p) { return p.topic; }).filter(function (t, i, a) { return a.indexOf(t) === i; }).forEach(function (t) {
+  var o = document.createElement("option"); o.value = t; o.textContent = t; sel.appendChild(o);
+});
+sel.addEventListener("change", function () { filter.topic = sel.value; render(); });
+Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (c) {
+  c.addEventListener("click", function () {
+    filter.status = c.getAttribute("data-status");
+    Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (x) { x.setAttribute("aria-pressed", x === c ? "true" : "false"); });
+    render();
+  });
+});
+window.addEventListener("resize", function () { Array.prototype.forEach.call(listEl.querySelectorAll("textarea"), fit); });
+render();
+</script>
+
+</body>
+</html>
