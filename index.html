@@ -90,6 +90,12 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
 .toast.show { opacity: 1; }
 .foot { color: var(--muted); font-size: .85rem; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .fill, .toast { transition: none; } }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid2 input { width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
+.grid2 label { display: block; margin-bottom: 4px; }
+a.btn { text-decoration: none; display: inline-block; }
+a.btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+@media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } }
 html{color-scheme:light}body{margin:0}
 </style>
 </head>
@@ -98,15 +104,36 @@ html{color-scheme:light}body{margin:0}
 <div class="wrap">
   <header>
     <h1>Lịch bài điện mặt trời</h1>
-    <p class="sub">12 bài viết sẵn cho trang cá nhân, đăng cách nhau 2 ngày từ 11/11. Chọn bài, bấm Sao chép, dán lên Facebook, rồi bấm Đã đăng.</p>
+    <p class="sub">34 bài viết sẵn cho fanpage, cách nhau 2 ngày. Bấm Hẹn giờ trên Facebook, dán bài, chọn đúng ngày giờ gợi ý, Facebook sẽ tự đăng khi tới giờ.</p>
   </header>
 
   <section class="panel" aria-label="Tiến độ và thông tin liên hệ">
-    <div class="progress-top"><span>Đã đăng</span><strong id="count">0 / 12 bài</strong></div>
+    <div class="progress-top"><span>Đã đăng</span><strong id="count">0 / 34 bài</strong></div>
     <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="progress-top"><span>Đã hẹn giờ trên Facebook</span><strong id="count2">0 / 34 bài</strong></div>
     <label for="contact">Dòng liên hệ cuối bài</label>
     <input type="text" id="contact" placeholder="Ví dụ: Anh Minh, tư vấn điện mặt trời, Zalo 09xx xxx xxx">
     <p class="hint">Dòng này tự thêm vào cuối mỗi bài khi sao chép. Để trống nếu không muốn.</p>
+  </section>
+
+  <section class="panel" aria-label="Kết nối fanpage">
+    <label for="pagelink">Fanpage của anh</label>
+    <input type="text" id="pagelink" placeholder="Dán link fanpage hoặc ID số của page">
+    <div class="actions">
+      <a class="btn ghost" id="openPage" target="_blank" rel="noopener">Mở fanpage</a>
+      <a class="btn" id="openBiz" target="_blank" rel="noopener">Kết nối: mở Meta Business Suite</a>
+    </div>
+    <p class="hint">Bấm nút xanh, đăng nhập Facebook và chọn đúng page là xong kết nối. Facebook chỉ cho hẹn giờ trên fanpage (không áp dụng cho trang cá nhân) và phải hẹn trước ít nhất 20 phút. Trang này không giữ mật khẩu hay quyền truy cập tài khoản của anh.</p>
+  </section>
+
+  <section class="panel" aria-label="Lịch đăng">
+    <div class="grid2">
+      <div><label for="start">Ngày bắt đầu</label><input type="date" id="start"></div>
+      <div><label for="gap">Cách nhau (ngày)</label><input type="number" id="gap" min="1" max="14"></div>
+      <div><label for="t1">Giờ bài lẻ (1, 3, 5...)</label><input type="time" id="t1"></div>
+      <div><label for="t2">Giờ bài chẵn (2, 4, 6...)</label><input type="time" id="t2"></div>
+    </div>
+    <div class="actions"><button type="button" class="btn ghost" id="shift">Dời lịch: bài chưa đăng đầu tiên vào ngày mai</button></div>
   </section>
 
   <div class="filters" role="group" aria-label="Lọc bài">
@@ -122,7 +149,6 @@ html{color-scheme:light}body{margin:0}
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-var START = new Date(2026, 10, 11);
 var DAYS = ["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
 var POSTS = [
 {id:"p1", topic:"Kiến thức", img:"Ảnh mái nhà có tấm pin dưới nắng, hoặc ảnh hóa đơn tiền điện đã che thông tin cá nhân.", text:
@@ -148,49 +174,86 @@ var POSTS = [
 {id:"p11", topic:"Mẹo", img:"Ảnh bản hợp đồng hoặc bản vẽ đã che thông tin khách, hoặc ảnh anh trao đổi với khách.", text:
 "📝 4 câu nên hỏi nhà thầu trước khi ký hợp đồng điện mặt trời:\n\n1. Công suất và sản lượng dự kiến tính dựa trên cái gì?\n2. Tên hãng, model tấm pin và biến tần ghi rõ trong hợp đồng chưa?\n3. Bảo hành ai chịu, giữ liên lạc bằng cách nào?\n4. Báo giá đã gồm vật tư, nhân công, thủ tục đấu nối chưa?\n\nNhà thầu nào trả lời rõ ràng cả 4 câu thì đáng tin hơn hẳn. Anh sẵn sàng trả lời cả 4 câu này cho bạn."},
 {id:"p12", topic:"Báo giá", img:"Ảnh tổng hợp các công trình trong tháng, hoặc ảnh anh chụp cùng khách.", text:
-"📅 Tháng này anh nhận thêm một số khách mới tư vấn điện mặt trời.\n\nNếu bạn đang cân nhắc, đây là cách nhanh nhất:\n1. Chụp hóa đơn tiền điện 2 đến 3 tháng gần nhất.\n2. Chụp mái nhà hoặc sân thượng.\n3. Nhắn anh, anh trả lời sơ bộ trong ngày.\n\nKhông cần quyết định ngay. Tính thử cho rõ cũng không mất gì."}
+"📅 Tháng này anh nhận thêm một số khách mới tư vấn điện mặt trời.\n\nNếu bạn đang cân nhắc, đây là cách nhanh nhất:\n1. Chụp hóa đơn tiền điện 2 đến 3 tháng gần nhất.\n2. Chụp mái nhà hoặc sân thượng.\n3. Nhắn anh, anh trả lời sơ bộ trong ngày.\n\nKhông cần quyết định ngay. Tính thử cho rõ cũng không mất gì."},
+{"id": "p24", "topic": "Chính sách EVN", "img": "Ảnh hóa đơn tiền điện tháng 11 đã che thông tin cá nhân, hoặc ảnh công tơ điện.", "text": "📢 Từ 1/11/2026, giá điện bán lẻ bình quân giảm 2%\n\nTheo EVN, giá bán lẻ điện bình quân còn 2.159,9037 đồng/kWh (chưa gồm VAT), áp dụng từ 1/11/2026. Căn cứ là Quyết định 1305/QĐ-EVN của EVN và biểu giá mới của Bộ Công Thương tại Quyết định 2892/QĐ-BCT.\n\nBiểu giá có đổi cơ cấu bậc nên mỗi nhà giảm một khác. Bạn so hóa đơn tháng này với tháng trước để biết nhà mình giảm bao nhiêu nhé.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p13", "topic": "Mẹo", "img": "Ảnh máy giặt hoặc máy bơm nước đang chạy, ghép với ảnh tấm pin dưới nắng trưa.", "text": "☀️ Muốn điện mặt trời tiết kiệm hơn, hãy dời giờ dùng điện về ban ngày.\n\nTấm pin ra điện nhiều nhất khoảng 9h đến 15h. Dùng ngay lúc đó là tiết kiệm nhất.\n• Chạy máy giặt, bơm nước, sạc xe điện vào buổi trưa.\n• Hẹn giờ các thiết bị gần giờ nắng nếu tiện.\n• Bật máy lạnh sớm cho nhà mát trước khi nắng gắt.\n\nĐổi thói quen nhỏ mà hóa đơn nhẹ thấy rõ. Nhà bạn dùng điện giờ nào nhiều, nhắn anh xem giúp."},
+{"id": "p25", "topic": "Chính sách EVN", "img": "Ảnh bảng biểu giá điện sinh hoạt mới hoặc ảnh hóa đơn đã che thông tin cá nhân.", "text": "🧾 Biểu giá điện sinh hoạt từ 1/11/2026 còn 5 bậc\n\nTrước đây là 6 bậc. Theo EVN, hộ dùng dưới 900 kWh mỗi tháng đều có tiền điện giảm so với trước. Mức giảm nhiều nhất khoảng 77.900 đồng mỗi tháng, ở hộ dùng 700 kWh. Từ 900 kWh trở lên thì chưa chắc giảm.\n\nNhà bạn dùng khoảng bao nhiêu kWh mỗi tháng? Gửi anh con số đó, anh tính giúp mức tiết kiệm nếu lắp điện mặt trời.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p14", "topic": "Kiến thức", "img": "Ảnh hóa đơn tiền điện đã che thông tin cá nhân, khoanh dòng số kWh.", "text": "📊 Nhìn hóa đơn điện biết nên lắp bao nhiêu kWp?\n\nCách ước tính nhanh:\n1. Lấy số kWh trung bình mỗi tháng trên hóa đơn.\n2. Chia cho 30 ra số kWh mỗi ngày.\n3. Mỗi 1 kWp thường ra khoảng 3,5 đến 4,5 kWh mỗi ngày, tùy mùa, hướng mái và che nắng.\n\nVí dụ nhà dùng 450 kWh mỗi tháng, tức 15 kWh mỗi ngày, thì cỡ 4 kWp là điểm bắt đầu để tính. Không nhất thiết phủ 100% nhu cầu. Con số này chỉ để tham khảo, cần khảo sát mái mới chốt. Gửi anh hóa đơn, anh tính giúp."},
+{"id": "p27", "topic": "Chính sách EVN", "img": "Ảnh nhà có điện mặt trời mái nhà, hoặc ảnh công tơ hai chiều.", "text": "📜 Nghị định 243/2026/NĐ-CP: bán điện dư lên lưới tối đa 50%\n\nCó hiệu lực từ 26/6/2026, nghị định này sửa quy định trước đó của Nghị định 58/2025, nơi mức bán dư là 20%. Hệ thống điện mặt trời mái nhà tự sản tự tiêu được thỏa thuận bán điện dư cho điện lực, tối đa 50% sản lượng phát.\n\nĐến hết 31/12/2030, hai bên còn có thể thỏa thuận cao hơn 50% nếu lưới điện khu vực đủ khả năng tiếp nhận.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p15", "topic": "Kiến thức", "img": "Ảnh mái nhà có tấm pin nhìn từ trên cao, kèm số tấm.", "text": "📐 Hệ thống 5 kWp chiếm bao nhiêu mái?\n\nNếu dùng tấm công suất khoảng 550W, 5 kWp thường cần 9 đến 10 tấm, chiếm khoảng 25 m² mái trống. Cần chừa thêm lối đi để vệ sinh và bảo trì.\n\nSân thượng rộng hoặc mái tôn dài thì bố trí thoải mái hơn mái nhiều góc cạnh. Gửi anh ảnh mái hoặc kích thước, anh ước lượng được số tấm lắp vừa."},
+{"id": "p28", "topic": "Chính sách EVN", "img": "Ảnh công tơ đo điện phát lên lưới, hoặc ảnh biến tần đang hiển thị sản lượng.", "text": "💰 Điện dư bán lên lưới năm 2026 được trả bao nhiêu?\n\nKhông còn giá cố định như thời FIT. Giá mua điện dư bằng giá điện năng thị trường bình quân của năm trước liền kề, do đơn vị vận hành thị trường điện công bố, và không vượt trần khung giá điện mặt trời mặt đất theo miền.\n\nNăm 2026 áp dụng mức bình quân năm 2025 là 844,8 đồng/kWh theo công bố của NSMO. Mức này đổi theo từng năm. Muốn biết nhà mình bán dư được khoảng bao nhiêu, nhắn anh tính.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p16", "topic": "Hỏi đáp", "img": "Ảnh tấm pin sau cơn mưa, hoặc ảnh bầu trời nhiều mây kèm màn hình sản lượng.", "text": "🌧️ Mùa mưa, điện mặt trời còn ra điện không?\n\nVẫn ra, nhưng ít hơn ngày nắng. Trời nhiều mây thì sản lượng giảm, mưa u ám thì giảm nhiều hơn.\n\nVì vậy anh luôn tính hiệu quả theo cả năm, không tính theo một tháng đẹp trời. Mưa còn rửa bớt bụi giúp tấm pin sạch hơn.\n\nBạn đang lo mùa mưa ảnh hưởng ra sao, cứ hỏi anh."},
+{"id": "p29", "topic": "Chính sách EVN", "img": "Ảnh so sánh hai con số trên giấy: giá điện mua vào và giá điện bán dư. Em có thể vẽ nếu anh cần.", "text": "⚖️ Tự dùng hay bán dư: kWh nào đáng giá hơn?\n\nGiá bán lẻ điện bình quân hiện khoảng 2.160 đồng/kWh (chưa VAT), mỗi bậc sinh hoạt một mức khác nhau. Điện dư bán lên lưới năm 2026 khoảng 844,8 đồng/kWh.\n\nNghĩa là mỗi kWh tự dùng thay điện mua vào thường đáng giá hơn kWh bán đi. Hệ thống nên thiết kế theo nhu cầu dùng thật, bán dư chỉ là phần cộng thêm. Nhà bạn dùng điện ban ngày nhiều hay ít? Nhắn anh nhé.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p17", "topic": "Mẹo", "img": "Ảnh mái nhà từ trên cao có la bàn hoặc mũi tên chỉ hướng Nam.", "text": "🧭 Hướng mái và độ nghiêng ảnh hưởng thế nào?\n\nỞ nước ta, tấm pin hướng Nam hoặc gần Nam thường cho sản lượng tốt. Hướng Đông hoặc Tây vẫn dùng được, sản lượng lệch theo giờ trong ngày.\n\nĐộ nghiêng thấp, khoảng 10 đến 20 độ tùy vùng, thường đủ cho mái nhà ở. Điều quan trọng hơn là không bị bóng che từ 9h đến 15h.\n\nMái nhà bạn hướng nào? Gửi ảnh, anh xem giúp."},
+{"id": "p26", "topic": "Chính sách EVN", "img": "Ảnh anh đang tư vấn khách bên hóa đơn điện, hoặc ảnh biến tần đang chạy.", "text": "⚡ Giá điện giảm 2%, lắp điện mặt trời còn lời không?\n\nĐiện mặt trời bạn tự dùng thay cho điện mua từ lưới. Khi giá điện giảm, mỗi kWh tiết kiệm được nhỏ đi một chút. Nhưng chênh lệch vẫn rõ so với giá bán điện dư, năm 2026 là 844,8 đồng/kWh, tính theo giá thị trường điện chứ không theo biểu giá bán lẻ.\n\nQuan trọng vẫn là lắp đúng công suất và dùng điện ban ngày nhiều. Anh tính lại bài toán hoàn vốn theo biểu giá mới cho bạn nếu cần.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p18", "topic": "Kiến thức", "img": "Ảnh bộ pin lưu trữ và biến tần hybrid đã lắp, hoặc sơ đồ đơn giản.", "text": "🔋 Nhà mình có cần thêm pin lưu trữ? Tự hỏi 3 câu:\n\n1. Nhà dùng điện nhiều vào buổi tối không (máy lạnh, bếp, tủ lạnh)?\n2. Khu vực nhà hay mất điện, hoặc có thiết bị không được ngắt?\n3. Ngân sách có thể thêm phần pin và biến tần hybrid không?\n\nTrả lời có 2 trong 3 thì đáng cân nhắc. Pin làm tổng chi phí cao hơn, nên cần tính trước thời gian hoàn vốn. Anh tính thử cho bạn nếu cần."},
+{"id": "p30", "topic": "Chính sách EVN", "img": "Ảnh công tơ hai chiều đã lắp, hoặc ảnh màn hình đăng ký trực tuyến đã che thông tin cá nhân.", "text": "📝 Muốn bán điện dư lên lưới, làm thủ tục thế nào?\n\n1. Gửi thông báo trực tuyến cho cơ quan tiếp nhận trước khi lắp (theo Cục Điện lực là ít nhất 10 ngày làm việc), chọn phương án có bán điện dư.\n2. Làm việc với điện lực để kiểm tra đấu nối và lắp công tơ hai chiều.\n3. Ký hợp đồng mua bán điện dư.\n4. Làm thủ tục giấy phép hoạt động điện lực nếu thuộc diện phải cấp.\n\nỞ TP.HCM, EVNHCMC có chức năng đăng ký bán điện dư trên website và ứng dụng chăm sóc khách hàng. Cần hỗ trợ hồ sơ, nhắn anh.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p19", "topic": "Kiến thức", "img": "Ảnh 5 giai đoạn thi công: khảo sát, lắp khung, lắp pin, tủ điện, bàn giao.", "text": "🛠️ Quy trình lắp điện mặt trời mái nhà gồm 5 bước:\n\n1. Khảo sát mái và hóa đơn điện.\n2. Thiết kế công suất, báo giá rõ vật tư.\n3. Thi công khung giá đỡ, tấm pin, biến tần, tủ điện.\n4. Làm thủ tục thông báo, đấu nối, nghiệm thu.\n5. Bàn giao, hướng dẫn xem sản lượng, bảo hành.\n\nBước nào anh cũng giải thích rõ cho chủ nhà. Muốn bắt đầu từ bước 1, nhắn anh nhé."},
+{"id": "p31", "topic": "Chính sách EVN", "img": "Ảnh bộ pin lưu trữ cạnh biến tần hybrid và công tơ.", "text": "🔋 Điện từ pin lưu trữ có bán dư được không?\n\nTheo Nghị định 243/2026/NĐ-CP, sản lượng điện dư gồm điện dư của hệ thống điện mặt trời mái nhà và điện từ hệ thống lưu trữ được sạc từ chính nguồn mặt trời mái nhà đó (nếu có). Sản lượng được xác định tại đầu ra của biến tần.\n\nNhà có pin vẫn nằm trong cơ chế, nhưng cần đo đếm đúng và thỏa thuận với bên mua điện. Anh tư vấn cấu hình pin và công tơ cho bạn.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p20", "topic": "Mẹo", "img": "Ảnh tủ điện DC/AC, dây nối đất, hoặc ảnh biến tần đặt nơi thoáng.", "text": "⚠️ An toàn điện mặt trời: 4 thứ không nên bỏ qua\n\n• Cầu dao và thiết bị bảo vệ phía DC và AC đúng chủng loại.\n• Nối đất và chống sét cho khung pin và biến tần.\n• Dây cáp chuyên dụng cho điện mặt trời, đi gọn, có ống bảo vệ.\n• Biến tần đặt nơi thoáng, tránh mưa hắt và chỗ dễ cháy.\n\nTiết kiệm ở phần này là cái giá rất đắt. Hỏi nhà thầu rõ từng mục trước khi ký."},
+{"id": "p32", "topic": "Chính sách EVN", "img": "Ảnh nhiều mái nhà có tấm pin trong khu dân cư.", "text": "📈 Điện mặt trời mái nhà đang tăng nhanh: số liệu từ EVN\n\nHết tháng 8/2026, cả nước ghi nhận 134.410 hệ thống tự sản xuất tự tiêu thụ, tổng công suất trên 11.450 MWp. Riêng từ 26/6 đến hết tháng 7 có thêm 5.928 hệ thống mới.\n\nĐáng chú ý, theo EVN mới khoảng 1,2% hệ thống mới đăng ký bán điện dư, tức đa số chủ nhà chọn tự dùng là chính. Nhà bạn hợp hướng nào, anh sẵn sàng trao đổi.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p21", "topic": "Mẹo", "img": "Ảnh chụp màn hình app giám sát biến tần (che thông tin cá nhân).", "text": "📱 Biến tần có app giám sát: nên xem gì mỗi tuần?\n\n• Sản lượng hôm nay so với ngày nắng tương tự.\n• Có cảnh báo lỗi hay mất kết nối không.\n• Điện tự dùng và điện lên lưới (nếu có bán).\n\nSản lượng tụt đột ngột giữa ngày nắng đẹp thường do bụi dày, bóng che hoặc thiết bị lỗi. Phát hiện sớm thì xử lý sớm. Anh hướng dẫn chủ nhà xem app ngay khi bàn giao."},
+{"id": "p33", "topic": "Chính sách EVN", "img": "Ảnh phiếu thông số tấm pin cũ hoặc hợp đồng mua bán điện đã che thông tin cá nhân.", "text": "🗓️ Nhà đã lắp điện mặt trời theo giá FIT cũ thì sao?\n\nEVN vẫn thanh toán theo hợp đồng giá FIT đã ký. Năm 2026, EVN thông báo giá mua (chưa VAT): 2.348 đồng/kWh cho hệ thống vận hành từ 1/6/2017 đến 30/6/2019, và 2.105 đồng/kWh cho hệ thống vận hành từ 1/7/2019 đến 31/12/2020.\n\nHệ thống lắp mới theo cơ chế tự sản tự tiêu thì tính theo giá điện dư thị trường. Nhà bạn lắp năm nào? Gửi anh, anh xem giúp thuộc nhóm nào.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p22", "topic": "Hỏi đáp", "img": "Ảnh anh giải thích bên tấm pin, hoặc 4 ô số 1 đến 4.", "text": "🤔 4 hiểu lầm thường gặp về điện mặt trời\n\n1. \"Lắp càng lớn càng lời.\" Chưa đúng. Lớn hơn nhu cầu thì phần dư bán giá thấp hơn nhiều giá điện mua vào.\n2. \"Lắp xong hết tiền điện.\" Chưa chắc. Ban đêm vẫn dùng điện lưới.\n3. \"Tấm nào cũng như nhau.\" Chất lượng và bảo hành khác nhau.\n4. \"Không cần bảo trì.\" Cần kiểm tra và vệ sinh định kỳ.\n\nBạn nghe hiểu lầm nào khác, comment anh giải đáp."},
+{"id": "p34", "topic": "Chính sách EVN", "img": "Ảnh nhà dân và công sở có điện mặt trời mái nhà.", "text": "🎯 Mục tiêu đến 2030: 50% nhà dân và công sở dùng điện mặt trời mái nhà\n\nTheo Quy hoạch điện VIII điều chỉnh, đến năm 2030 mục tiêu là 50% tòa nhà công sở và nhà dân dùng điện mặt trời mái nhà tự sản tự tiêu. Cơ chế bán điện dư mở rộng cũng nằm trong định hướng khuyến khích này.\n\nAnh theo dõi sát quy định để tư vấn đúng cho từng nhà. Muốn biết nhà mình lắp được không, nhắn anh.\n\nThông tin cập nhật tháng 11/2026."},
+{"id": "p23", "topic": "Kiến thức", "img": "Ảnh mái xưởng có hệ thống pin, hoặc ảnh biểu đồ phụ tải của một nhà máy (che tên).", "text": "🏭 Xưởng, nhà máy khi nào đáng lắp điện mặt trời?\n\nThường hợp khi:\n• Hoạt động ban ngày, tải điện lớn.\n• Mái xưởng rộng, chắc, ít bị che.\n• Tiền điện là khoản chi lớn mỗi tháng.\n\nDoanh nghiệp nên tính theo biểu đồ phụ tải thực tế, không tính theo diện tích mái. Có số liệu công tơ 3 đến 6 tháng, anh giúp bạn tính phương án phù hợp."}
 ];
 
 var KEY = "lich-bai-nlmt-v1";
-var state = { done: {}, edits: {}, contact: "" };
-try { var s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) state = { done: s.done || {}, edits: s.edits || {}, contact: s.contact || "" }; } catch (e) {}
+var state = { done: {}, edits: {}, contact: "", sched: {}, page: "", start: "2026-11-11", gap: 2, t1: "19:30", t2: "11:45" };
+try { var s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) { for (var k in state) { if (s[k] != null) state[k] = s[k]; } } } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
 var filter = { status: "all", topic: "" };
 var listEl = document.getElementById("list");
 var toastEl = document.getElementById("toast");
 var toastTimer;
-function toast(msg) { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 1800); }
+function toast(msg, ms) { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, ms || 1800); }
 
-function whenLabel(i) {
-  var d = new Date(START.getFullYear(), START.getMonth(), START.getDate() + i * 2);
-  var t = i % 2 === 0 ? "19:30" : "11:45";
-  return DAYS[d.getDay()] + ", " + d.getDate() + "/" + (d.getMonth() + 1) + " lúc " + t;
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function postDate(i) {
+  var b = (state.start || "2026-11-11").split("-"), t = (i % 2 === 0 ? state.t1 : state.t2 || "11:45").split(":");
+  return new Date(+b[0], +b[1] - 1, +b[2] + i * (+state.gap || 2), +t[0] || 0, +t[1] || 0);
+}
+function whenLabel(i) { var d = postDate(i); return DAYS[d.getDay()] + ", " + d.getDate() + "/" + (d.getMonth() + 1) + " lúc " + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+function pageInfo() {
+  var v = (state.page || "").trim(), m = v.match(/[?&]id=(\d+)/) || v.match(/^(\d{8,})$/);
+  if (!v) return { url: "", id: "" };
+  if (m) return { id: m[1], url: "https://www.facebook.com/profile.php?id=" + m[1] };
+  return { id: "", url: /^https?:\/\//i.test(v) ? v : "https://www.facebook.com/" + v.replace(/^@/, "") };
+}
+function composerUrl() { var pi = pageInfo(); return "https://business.facebook.com/latest/composer" + (pi.id ? "?asset_id=" + pi.id : ""); }
+function gcalUrl(p, i) {
+  var d = postDate(i), e = new Date(d.getTime() + 15 * 60000);
+  function f(x) { return x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate()) + "T" + pad(x.getHours()) + pad(x.getMinutes()) + "00"; }
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent("Đăng bài Facebook: " + p.topic) +
+    "&dates=" + f(d) + "/" + f(e) + "&ctz=Asia%2FHo_Chi_Minh&details=" + encodeURIComponent(curText(p).slice(0, 200) + "...");
 }
 function curText(p) { return state.edits[p.id] != null ? state.edits[p.id] : p.text; }
 function fit(ta) { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 2) + "px"; }
 function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
 
-function copyText(ta, p) {
+function copyOut(ta, msg, ms) {
   var out = ta.value.trim();
   if (state.contact.trim()) out += "\n\n" + state.contact.trim();
   function fallback() {
     var tmp = document.createElement("textarea"); tmp.value = out; document.body.appendChild(tmp); tmp.select();
     var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
     document.body.removeChild(tmp);
-    toast(ok ? "Đã sao chép, dán lên Facebook nhé" : "Không sao chép được, anh bôi đen và copy tay nhé");
+    toast(ok ? msg : "Không sao chép được, anh bôi đen và copy tay nhé", ms);
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(out).then(function () { toast("Đã sao chép, dán lên Facebook nhé"); }, fallback);
+    navigator.clipboard.writeText(out).then(function () { toast(msg, ms); }, fallback);
   } else { fallback(); }
 }
 
 function render() {
   listEl.textContent = "";
-  var shown = 0, doneCount = 0;
+  var shown = 0, doneCount = 0, schedCount = 0;
   POSTS.forEach(function (p, i) {
     var done = !!state.done[p.id];
     if (done) doneCount++;
+    if (state.sched[p.id]) schedCount++;
     if (filter.status === "todo" && done) return;
     if (filter.status === "done" && !done) return;
     if (filter.topic && p.topic !== filter.topic) return;
@@ -203,22 +266,33 @@ function render() {
     var need = el("span", "need", "Cần điền thông tin thật"); need.hidden = ta.value.indexOf("[") === -1;
     head.appendChild(need);
     if (done) head.appendChild(el("span", "okmark", "Đã đăng"));
+    else if (state.sched[p.id]) head.appendChild(el("span", "okmark", "Đã hẹn giờ"));
+    else if (postDate(i).getTime() < Date.now() + 20 * 60000) head.appendChild(el("span", "need", "Đã qua giờ, cần dời lịch"));
     card.appendChild(head);
     card.appendChild(ta);
     ta.addEventListener("input", function () { state.edits[p.id] = ta.value; need.hidden = ta.value.indexOf("[") === -1; fit(ta); save(); });
     var img = el("p", "img"); var b = el("b", null, "Gợi ý ảnh: "); img.appendChild(b); img.appendChild(document.createTextNode(p.img));
     card.appendChild(img);
     var act = el("div", "actions");
-    var copy = el("button", "btn", "Sao chép bài"); copy.type = "button";
-    copy.addEventListener("click", function () { copyText(ta, p); });
+    var plan = el("button", "btn", "Hẹn giờ trên Facebook"); plan.type = "button";
+    plan.addEventListener("click", function () {
+      copyOut(ta, "Đã sao chép. Trên Facebook dán bài, bật Hẹn giờ: " + whenLabel(i), 5000);
+      window.open(composerUrl(), "_blank", "noopener");
+    });
+    var copy = el("button", "btn ghost", "Chỉ sao chép"); copy.type = "button";
+    copy.addEventListener("click", function () { copyOut(ta, "Đã sao chép bài"); });
+    var sch = el("button", "btn ghost", state.sched[p.id] ? "Đã hẹn giờ" : "Đánh dấu đã hẹn giờ"); sch.type = "button"; sch.setAttribute("aria-pressed", state.sched[p.id] ? "true" : "false");
+    sch.addEventListener("click", function () { if (state.sched[p.id]) delete state.sched[p.id]; else state.sched[p.id] = true; save(); render(); });
     var mark = el("button", "btn ghost", done ? "Đã đăng" : "Đánh dấu đã đăng"); mark.type = "button"; mark.setAttribute("aria-pressed", done ? "true" : "false");
     mark.addEventListener("click", function () { if (state.done[p.id]) delete state.done[p.id]; else state.done[p.id] = true; save(); render(); });
-    act.appendChild(copy); act.appendChild(mark);
+    var cal = el("a", "btn ghost", "Nhắc lịch"); cal.href = gcalUrl(p, i); cal.target = "_blank"; cal.rel = "noopener";
+    act.appendChild(plan); act.appendChild(copy); act.appendChild(sch); act.appendChild(mark); act.appendChild(cal);
     card.appendChild(act);
     listEl.appendChild(card);
   });
   if (!shown) listEl.appendChild(el("p", "empty", "Không có bài nào khớp bộ lọc."));
   document.getElementById("count").textContent = doneCount + " / " + POSTS.length + " bài";
+  document.getElementById("count2").textContent = schedCount + " / " + POSTS.length + " bài";
   document.getElementById("fill").style.width = (doneCount / POSTS.length * 100) + "%";
   Array.prototype.forEach.call(listEl.querySelectorAll("textarea"), fit);
 }
@@ -239,6 +313,27 @@ Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (c) {
     render();
   });
 });
+function links() {
+  var pi = pageInfo(), op = document.getElementById("openPage"), ob = document.getElementById("openBiz");
+  if (pi.url) { op.href = pi.url; op.removeAttribute("aria-disabled"); } else { op.removeAttribute("href"); op.setAttribute("aria-disabled", "true"); }
+  ob.href = composerUrl();
+}
+var pl = document.getElementById("pagelink"); pl.value = state.page;
+pl.addEventListener("input", function () { state.page = pl.value; save(); links(); render(); });
+[["start", "start"], ["gap", "gap"], ["t1", "t1"], ["t2", "t2"]].forEach(function (x) {
+  var n = document.getElementById(x[0]); n.value = state[x[1]];
+  n.addEventListener("input", function () { state[x[1]] = n.value; save(); render(); });
+});
+document.getElementById("shift").addEventListener("click", function () {
+  var first = -1, i;
+  for (i = 0; i < POSTS.length; i++) { if (state.sched[POSTS[i].id]) { toast("Đã có bài hẹn giờ trên Facebook, anh đổi Ngày bắt đầu bằng tay để khỏi lệch lịch", 4000); return; } }
+  for (i = 0; i < POSTS.length; i++) { if (!state.done[POSTS[i].id]) { first = i; break; } }
+  if (first < 0) { toast("Tất cả bài đã đăng rồi"); return; }
+  var t = new Date(), d = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1 - first * (+state.gap || 2));
+  state.start = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  document.getElementById("start").value = state.start; save(); render(); toast("Đã dời lịch, bài chưa đăng đầu tiên vào ngày mai");
+});
+links();
 window.addEventListener("resize", function () { Array.prototype.forEach.call(listEl.querySelectorAll("textarea"), fit); });
 render();
 </script>
